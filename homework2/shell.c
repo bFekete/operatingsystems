@@ -5,7 +5,7 @@
 #include <sys/types.h>
 #include <stdio.h>	
 #include <unistd.h> // chdir
-#include <string.h> // strtok
+#include <string.h> // strtoka
 
 #define MAX_LINE 80 /* The maximum length command */
 #define BUFFER_SIZE 25
@@ -34,21 +34,12 @@ int main(void) {
      * (3) If command included &, parent will invoke wait()
      */
      if(strncmp(line, "exit", 4) == 0){
+       printf("Exiting Shell...\n");
        should_run = 0;
      } else {
        parseCommand(line, args);
-       printf("parseCommand Successful\n");
        
-       int execvpStatusCode = execvp(*args, NULL);
-       if(execvpStatusCode != 0){
-        printf("*args:%s\nargs[0]:%s\nCode:%d \n",*args, args[0], execvpStatusCode);
-        fprintf(stderr, "Command Failed\n");
-       }
-       
-     }
      /*
-     else {
-     
       char write_msg[BUFFER_SIZE] = "Greetings";
       char read_msg[BUFFER_SIZE];
       
@@ -58,9 +49,9 @@ int main(void) {
         fprintf(stderr, "Pipe Failed");
         return 1;
       }
-      
+      */
       pid_t pid;
-      pid = fork;
+      pid = fork();
       
       if (pid < 0) { // error occurred 
         fprintf(stderr, "Fork failed");
@@ -69,6 +60,7 @@ int main(void) {
         // Parent will wait for the child to complete
         wait(NULL);
         
+        /*
         //close the unused end of the pipe
         close(fd[READ_END]);
         
@@ -77,8 +69,15 @@ int main(void) {
         
         // close the write end of the pipe 
         close(fd[WRITE_END]);
-        
+        */
       } else if (pid == 0) { // Child Process
+        printf("Child Process\n");
+        int execvpStatusCode = execvp(*args, args);
+        if(execvpStatusCode != 0){
+          printf("*args:%s\nargs[0]:%s\nCode:%d\n",*args, args[0], execvpStatusCode);
+          fprintf(stderr, "Command Failed\n");
+        }
+        /*
         // close the unused end of the pipe 
         close(fd[WRITE_END]);
         
@@ -87,30 +86,30 @@ int main(void) {
         printf("read %s\n", read_msg);
         
         // Close the read end of the pipe 
-        close(fd[READ_END]);  
+        close(fd[READ_END]);
+        */  
       }
        
      }
-     */
      
   }
-
   return 0;
 }
 
 void parseCommand(char *line, char **argArr){
   printf("parseCommand *line:%s\n" , line);
-  char *args = strtok(line, " ");
+  char *args = strtok(line, "\n "); // Execvp fails if i just use a space
   printf("parseCommand *args:%s\n", args); 
   int i = 0;
   
   while(args != NULL){
     argArr[i] = args;
     printf("while:%s\n", argArr[i]);
-    args = strtok(NULL, " ");  // strtok returns a pointer to a null terminated string containing the next token
+    args = strtok(NULL, "\n ");  // strtok returns a pointer to a null terminated string containing the next token
     i++;
   }
   argArr[i] = NULL;
+  printf("parseCommand Successful\n");
 }
 
 
