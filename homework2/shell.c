@@ -39,6 +39,11 @@ int main(void) {
      } else {
        parseCommand(line, args);
        
+       if(strncmp(args[0], "cd", 2) == 0){
+        chdir(args[1]);
+        continue;
+       }
+       
      /*
       char write_msg[BUFFER_SIZE] = "Greetings";
       char read_msg[BUFFER_SIZE];
