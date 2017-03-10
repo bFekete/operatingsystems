@@ -12,11 +12,12 @@
 #define READ_END 0
 #define WRITE_END 1
 
+void parseCommand(char *line, char **argArr);
+
 int main(void) {
   printf("Welcome to Brian Fekete's Shell\n");
   
-  char *line[MAX_LINE];
-  char *command[MAX_LINE/2];
+  char line[MAX_LINE];
   char *args[MAX_LINE/2 + 1]; /* command line arguments */
   int should_run = 1; /* Flag to determine when to exit program */
   
@@ -26,9 +27,6 @@ int main(void) {
     
     fgets(line, sizeof(line), stdin);
     
-    // Parse line and split into command and args
-    
-    
     /**
      * After reading user input, the steps are:
      * (1) Fork a child process using fork()
@@ -37,17 +35,25 @@ int main(void) {
      */
      if(strncmp(line, "exit", 4) == 0){
        should_run = 0;
-     } 
-     //else if(){
-     //
-     //} 
+     } else {
+       parseCommand(line, args);
+       printf("parseCommand Successful\n");
+       
+       int execvpStatusCode = execvp(*args, NULL);
+       if(execvpStatusCode != 0){
+        printf("*args:%s\nargs[0]:%s\nCode:%d \n",*args, args[0], execvpStatusCode);
+        fprintf(stderr, "Command Failed\n");
+       }
+       
+     }
+     /*
      else {
      
       char write_msg[BUFFER_SIZE] = "Greetings";
       char read_msg[BUFFER_SIZE];
       
       int fd[2];
-      /* Create the pipe */
+      // Create the pipe 
       if (pipe(fd) == -1) {
         fprintf(stderr, "Pipe Failed");
         return 1;
@@ -56,38 +62,55 @@ int main(void) {
       pid_t pid;
       pid = fork;
       
-      if (pid < 0) { /* error occurred */
+      if (pid < 0) { // error occurred 
         fprintf(stderr, "Fork failed");
         return 1;
-      } else if (pid > 0){ /* Parent Process */
-        /* Parent will wait for the child to complete */
+      } else if (pid > 0){ // Parent Process
+        // Parent will wait for the child to complete
         wait(NULL);
         
-        /* close the unused end of the pipe */
+        //close the unused end of the pipe
         close(fd[READ_END]);
         
-        /* Write to the pipe */
+        // Write to the pipe 
         write(fd[WRITE_END], write_msg, strlen(write_msg) + 1);
         
-        /* Close the write end of the pipe */
+        // close the write end of the pipe 
         close(fd[WRITE_END]);
         
-      } else if (pid == 0) { /* Child Process */
-        /* close the unused end of the pipe */
+      } else if (pid == 0) { // Child Process
+        // close the unused end of the pipe 
         close(fd[WRITE_END]);
         
-        /* Read from the pipe */
+        // Read from the pipe 
         read(fd[READ_END], read_msg, BUFFER_SIZE);
         printf("read %s\n", read_msg);
         
-        /* Close the read end of the pipe */
+        // Close the read end of the pipe 
         close(fd[READ_END]);  
       }
        
      }
+     */
      
   }
 
   return 0;
 }
+
+void parseCommand(char *line, char **argArr){
+  printf("parseCommand *line:%s\n" , line);
+  char *args = strtok(line, " ");
+  printf("parseCommand *args:%s\n", args); 
+  int i = 0;
+  
+  while(args != NULL){
+    argArr[i] = args;
+    printf("while:%s\n", argArr[i]);
+    args = strtok(NULL, " ");  // strtok returns a pointer to a null terminated string containing the next token
+    i++;
+  }
+  argArr[i] = NULL;
+}
+
 
