@@ -12,7 +12,9 @@
 #define READ_END 0
 #define WRITE_END 1
 
-void parseCommand(char *line, char **argArr);
+int parseCommand(char *line, char **argArr);
+int argCounter(char *args[]);
+void printPrefix();
 
 int main(void) {
   printf("Welcome to Brian Fekete's Shell\n");
@@ -20,9 +22,11 @@ int main(void) {
   char line[MAX_LINE];
   char *args[MAX_LINE/2 + 1]; /* command line arguments */
   int should_run = 1; /* Flag to determine when to exit program */
-  
+  int numberOfArgs = 0;
+  int backgroundProcess = 0;
+
   while(should_run){
-    printf("bfek>");
+    printPrefix();
     fflush(stdout);
     
     fgets(line, sizeof(line), stdin);
@@ -37,8 +41,13 @@ int main(void) {
        printf("Exiting Shell...\n");
        should_run = 0;
      } else {
-       parseCommand(line, args);
-       
+       if (strncmp(line, "\0", 1)) {
+         continue;
+       }
+       backgroundProcess = parseCommand(line, args);
+       numberOfArgs = argCounter(args);
+       printf("Args:%d\n", numberOfArgs);
+	     
        if(strncmp(args[0], "cd", 2) == 0){
         chdir(args[1]);
         continue;
@@ -62,9 +71,15 @@ int main(void) {
         fprintf(stderr, "Fork failed");
         return 1;
       } else if (pid > 0){ // Parent Process
-        // Parent will wait for the child to complete
-        wait(NULL);
-        
+
+        if(backgroundProcess) {
+          // Don't call wait in parent if process has &
+          printPrefix();
+        } else {
+          // Parent will wait for the child to complete
+          wait(NULL);
+        }
+
         /*
         //close the unused end of the pipe
         close(fd[READ_END]);
@@ -76,7 +91,9 @@ int main(void) {
         close(fd[WRITE_END]);
         */
       } else if (pid == 0) { // Child Process
-        printf("Child Process\n");
+        printf("Child Process\n");	
+
+ 
         int execvpStatusCode = execvp(*args, args);
         if(execvpStatusCode != 0){
           printf("*args:%s\nargs[0]:%s\nCode:%d\n",*args, args[0], execvpStatusCode);
@@ -101,7 +118,9 @@ int main(void) {
   return 0;
 }
 
-void parseCommand(char *line, char **argArr){
+int parseCommand(char *line, char **argArr){
+  int background = 0;
+
   printf("parseCommand *line:%s\n" , line);
   char *args = strtok(line, "\n "); // Execvp fails if i just use a space
   printf("parseCommand *args:%s\n", args); 
@@ -111,10 +130,31 @@ void parseCommand(char *line, char **argArr){
     argArr[i] = args;
     printf("while:%s\n", argArr[i]);
     args = strtok(NULL, "\n ");  // strtok returns a pointer to a null terminated string containing the next token
-    i++;
+    i++;    
   }
-  argArr[i] = NULL;
+  if(background == 0 && strncmp(argArr[i-1], "&", 1) == 0){
+    background = 1;
+    argArr[i - 1] = NULL;
+  } else {
+    argArr[i] = NULL;
+  }
+
+
   printf("parseCommand Successful\n");
+   
+  return background;
 }
 
+int argCounter(char *args[]){
+  int counter = 0;
+  for(counter =0; args[counter] != NULL; counter++) {
+    counter ++;
+  } 
 
+  printf("count %d\n", counter);
+  return counter;
+}
+
+void printPrefix(){
+  printf("bfek>");
+}
