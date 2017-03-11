@@ -43,7 +43,8 @@ int main(void) {
      } else {
        backgroundProcess = parseCommand(line, args);
        numberOfArgs = argCounter(args);
-       printf("Args:%d\n", numberOfArgs);
+       
+// printf("Args:%d\n", numberOfArgs);
 	     
        if(strncmp(args[0], "cd", 2) == 0){
         chdir(args[1]);
@@ -71,7 +72,6 @@ int main(void) {
 
         if(backgroundProcess) {
           // Don't call wait in parent if process has &
-          printPrefix();
         } else {
           // Parent will wait for the child to complete
           wait(NULL);
@@ -88,12 +88,11 @@ int main(void) {
         close(fd[WRITE_END]);
         */
       } else if (pid == 0) { // Child Process
-        printf("Child Process\n");	
-
+        // printf("Child Process\n");	
  
         int execvpStatusCode = execvp(*args, args);
         if(execvpStatusCode != 0){
-          printf("*args:%s\nargs[0]:%s\nCode:%d\n",*args, args[0], execvpStatusCode);
+//          printf("*args:%s\nargs[0]:%s\nCode:%d\n",*args, args[0], execvpStatusCode);
           fprintf(stderr, "Command Failed\n");
         }
         /*
@@ -118,14 +117,16 @@ int main(void) {
 int parseCommand(char *line, char **argArr){
   int background = 0;
 
-  printf("parseCommand *line:%s\n" , line);
+// printf("parseCommand *line:%s\n" , line);
+  
   char *args = strtok(line, "\n "); // Execvp fails if i just use a space
-  printf("parseCommand *args:%s\n", args); 
+  
+// printf("parseCommand *args:%s\n", args); 
   int i = 0;
   
   while(args != NULL){
     argArr[i] = args;
-    printf("while:%s\n", argArr[i]);
+//    printf("while:%s\n", argArr[i]);
     args = strtok(NULL, "\n ");  // strtok returns a pointer to a null terminated string containing the next token
     i++;    
   }
@@ -137,7 +138,7 @@ int parseCommand(char *line, char **argArr){
   }
 
 
-  printf("parseCommand Successful\n");
+//  printf("parseCommand Successful\n");
    
   return background;
 }
@@ -148,7 +149,7 @@ int argCounter(char *args[]){
     counter ++;
   } 
 
-  printf("count %d\n", counter);
+//  printf("count %d\n", counter);
   return counter;
 }
 
