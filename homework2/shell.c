@@ -41,9 +41,6 @@ int main(void) {
        printf("Exiting Shell...\n");
        should_run = 0;
      } else {
-       if (strncmp(line, "\0", 1)) {
-         continue;
-       }
        backgroundProcess = parseCommand(line, args);
        numberOfArgs = argCounter(args);
        printf("Args:%d\n", numberOfArgs);
