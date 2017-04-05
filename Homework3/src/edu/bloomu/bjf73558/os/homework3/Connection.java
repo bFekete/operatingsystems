@@ -1,8 +1,10 @@
 package edu.bloomu.bjf73558.os.homework3;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.Socket;
 
 /**
@@ -25,25 +27,24 @@ public class Connection implements Runnable {
     @Override
     public void run() {
         try {
-            ObjectOutputStream oos;
-            oos = new ObjectOutputStream(socket.getOutputStream());
-            ObjectInputStream ois;
-            ois = new ObjectInputStream(socket.getInputStream());
+            BufferedReader inputStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            BufferedWriter outputStream = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
-            
-            
-            ois.close();
-            oos.flush();
-            oos.close();
+            while (true) {
+                String input = inputStream.readLine();
+                System.out.println(input);
+                outputStream.write("Server: " + input + "\n");
+                outputStream.flush();
+            }
         } catch (IOException ex) {
-            System.out.println("I/O error in Connection.");
+            System.out.println("I/O error in Connection.\n" + ex.toString());
         } finally {
             try {
                 if (socket != null) {
                     socket.close();
                 }
             } catch (IOException ex) {
-                System.out.println("Error closing socket in Connection.");
+                System.out.println("Error closing socket in Connection.\n" + ex.toString());
             }
         } // End of Finally
 

@@ -1,8 +1,11 @@
 package edu.bloomu.bjf73558.os.homework3;
 
 import java.util.LinkedList;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -10,7 +13,6 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class ThreadPool {
 
-    private final Lock lock = new ReentrantLock();
     final static int MAX_TASKS = 3;
     WorkQueue taskQueue;
 
@@ -22,55 +24,77 @@ public class ThreadPool {
      * a given task to the queue.
      */
     public ThreadPool() {
+        taskQueue = new WorkQueue();
 
         Thread tasks[] = new Thread[MAX_TASKS];
         for (int i = 0; i < MAX_TASKS; i++) {
-            tasks[i] = new Thread();
+            tasks[i] = new Thread(new WorkerThread());
             tasks[i].start();
         }
     }
 
     public void addTaskToQueue(Connection connection) {
-        lock.lock();
-        try {
-            taskQueue.addTaskToQueue(connection);
-        } finally {
-            lock.unlock();
+        taskQueue.addTaskToQueue(connection);
+    }
+
+    /**
+     * Stores a Linked List of runnable tasks. Use LinkedList, ReentrantLock,
+     * and Condition. You need one method to add a task to the list and another
+     * to get a task. A thread will block if it tries to to get a task when none
+     * is available.
+     *
+     * @author Brian Fekete
+     */
+    class WorkQueue {
+        private final Lock lock = new ReentrantLock();
+        private final Condition notEmpty = lock.newCondition();
+        LinkedList<Connection> taskQueue;
+
+        public WorkQueue() {
+            taskQueue = new LinkedList<>();
         }
-    }
 
-}
+        public void addTaskToQueue(Connection connection) {
+            lock.lock();
+            try {
+                taskQueue.add(connection);
+            } finally {
+                lock.unlock();
+                notEmpty.signal();
+            }
+        }
 
-/**
- * Stores a Linked List of runnable tasks. Use LinkedList, ReentrantLock, and
- * Condition. You need one method to add a task to the list and another to get a
- * task. A thread will block if it tries to to get a task when none is
- * available.
- *
- * @author Brian Fekete
- */
-class WorkQueue {
+        public Connection getTaskFromQueue() {
+            lock.lock();
+            try {
+                while (taskQueue.isEmpty()){
+                    notEmpty.await();
+                }
+                return taskQueue.getFirst();
+            } catch (InterruptedException ex) {
+                System.out.println("Interrupted exception in getTaskFromQueue\n" + ex.toString());
+            } finally {
+                lock.unlock();
+            }
+            return null;
+        }
 
-    LinkedList<Connection> taskQueue;
+    } // End of WorkQueue
 
-    public WorkQueue() {
-        taskQueue = new LinkedList<>();
-    }
+    /**
+     * Simply tries to get a task from the queue and runs it.
+     *
+     * @author Brian Fekete
+     */
+    class WorkerThread implements Runnable {
 
-    public void addTaskToQueue(Connection connection) {
-        taskQueue.add(connection);
-    }
-}
-
-/**
- * Simply tries to get a task from the queue and runs it.
- *
- * @author Brian Fekete
- */
-class WorkerThread implements Runnable {
-
-    @Override
-    public void run() {
+        @Override
+        public void run() {
+            while (true) {
+                Connection connection = taskQueue.getTaskFromQueue();
+                connection.run();
+            }
+        }
 
     }
 

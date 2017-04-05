@@ -14,6 +14,7 @@ public class EchoServer {
 
     /**
      * @param args the command line arguments
+     * @throws java.io.IOException
      */
     public static void main(String[] args) throws IOException {
         final int PORT = 8000;
@@ -22,7 +23,9 @@ public class EchoServer {
         ThreadPool threadPool = new ThreadPool();
         
         while(true){
-            threadPool.addTaskToQueue(new Connection(server.accept()));
+            Connection connection = new Connection(server.accept());
+            threadPool.addTaskToQueue(connection);
+            System.out.println("Echo client connected.");
         }
     }
     
