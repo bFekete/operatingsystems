@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -38,7 +40,11 @@ public class Connection implements Runnable {
             }
 
         } catch (IOException ex) {
-            System.out.println("I/O error in Connection.\n" + ex.toString());
+            try {
+                socket.close();
+            } catch (IOException ex1) {
+                System.out.println("Error closing socket in Connection.\n" + ex.toString());
+            }
         } finally {
             try {
                 if (socket != null) {
