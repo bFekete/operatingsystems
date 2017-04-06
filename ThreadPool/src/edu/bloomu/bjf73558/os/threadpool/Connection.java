@@ -1,4 +1,4 @@
-package edu.bloomu.bjf73558.os.homework3;
+package edu.bloomu.bjf73558.os.threadpool;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -13,7 +13,7 @@ import java.net.Socket;
  */
 public class Connection implements Runnable {
 
-    private Socket socket;
+    private final Socket socket;
 
     public Connection(Socket socket) {
         this.socket = socket;
@@ -30,12 +30,13 @@ public class Connection implements Runnable {
             BufferedReader inputStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             BufferedWriter outputStream = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
-            while (true) {
+            while (socket.isConnected()) {
                 String input = inputStream.readLine();
-                System.out.println(input);
                 outputStream.write("Server: " + input + "\n");
                 outputStream.flush();
+
             }
+
         } catch (IOException ex) {
             System.out.println("I/O error in Connection.\n" + ex.toString());
         } finally {

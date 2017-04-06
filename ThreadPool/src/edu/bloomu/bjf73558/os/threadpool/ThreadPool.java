@@ -1,4 +1,4 @@
-package edu.bloomu.bjf73558.os.homework3;
+package edu.bloomu.bjf73558.os.threadpool;
 
 import java.util.LinkedList;
 import java.util.concurrent.locks.Condition;
@@ -46,9 +46,11 @@ public class ThreadPool {
      * @author Brian Fekete
      */
     class WorkQueue {
+
+        LinkedList<Connection> taskQueue;
+
         private final Lock lock = new ReentrantLock();
         private final Condition notEmpty = lock.newCondition();
-        LinkedList<Connection> taskQueue;
 
         public WorkQueue() {
             taskQueue = new LinkedList<>();
@@ -57,20 +59,21 @@ public class ThreadPool {
         public void addTaskToQueue(Connection connection) {
             lock.lock();
             try {
+
                 taskQueue.add(connection);
+                notEmpty.signalAll();
             } finally {
                 lock.unlock();
-                notEmpty.signal();
             }
         }
 
         public Connection getTaskFromQueue() {
             lock.lock();
             try {
-                while (taskQueue.isEmpty()){
+                while (taskQueue.isEmpty()) {
                     notEmpty.await();
                 }
-                return taskQueue.getFirst();
+                return taskQueue.pop();
             } catch (InterruptedException ex) {
                 System.out.println("Interrupted exception in getTaskFromQueue\n" + ex.toString());
             } finally {
@@ -91,8 +94,14 @@ public class ThreadPool {
         @Override
         public void run() {
             while (true) {
-                Connection connection = taskQueue.getTaskFromQueue();
-                connection.run();
+                try {
+                    Connection connection = taskQueue.getTaskFromQueue();
+                    Thread thread = new Thread(connection);
+                    thread.start();
+                    thread.join();
+                } catch (InterruptedException ex) {
+                    System.out.println("Interrupted exception in WorkerThread\n" + ex.toString());
+                }
             }
         }
 
